@@ -1,17 +1,6 @@
-# the inclusion of the tests module is not meant to offer best practices for
-# testing in general, but rather to support the `find_packages` example in
-# setup.py that excludes installing the "tests" package
 
-import unittest
+from contcfg import TCCmdWrapper
 
-from sample.simple import add_one
-
-
-class BasicTestSuite(unittest.TestCase):
-
-    def test_add_one(self):
-        self.assertEqual(add_one(5), 6)
-
-
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == "__main__":
+    tc = TCCmdWrapper(run_with_sudo=True)
+    tc.set_bandwidth("constellation-test-worker-2", "constellation-test-worker-3", 1000, "mbit")
