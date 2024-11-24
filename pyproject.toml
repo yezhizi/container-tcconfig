@@ -1,0 +1,71 @@
+[build-system]
+# A list of packages that are needed to build package:
+requires = [
+  "setuptools"
+]  # REQUIRED if [build-system] table is used
+
+build-backend = "setuptools.build_meta" 
+
+
+[project]
+name = "sampleproject"  # REQUIRED, is the only field that cannot be marked as dynamic.
+version = "3.0.0"  # REQUIRED, although can be dynamic
+description = "A sample Python project"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.txt"}
+keywords = ["sample", "setuptools", "development"]
+authors = [
+  {name = "A. Random Developer", email = "author@example.com" }
+]
+maintainers = [
+  {name = "A. Great Maintainer", email = "maintainer@example.com" }
+]
+# For a list of valid classifiers, see https://pypi.org/classifiers/
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Build Tools",
+  "License :: OSI Approved :: MIT License",
+
+  # Specify the Python versions you support here. These classifiers are *not*
+  # checked by "pip install". See instead "requires-python" key in this file.
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+dependencies = [
+  "peppercorn"
+]
+
+# if `pip install sampleproject[dev]`, then the "check-manifest" will be installed
+[project.optional-dependencies]
+dev = ["check-manifest"]
+test = ["coverage"]
+
+[project.urls]
+"Homepage" = "https://github.com/pypa/sampleproject"
+"Bug Reports" = "https://github.com/pypa/sampleproject/issues"
+"Funding" = "https://donate.pypi.org"
+"Say Thanks!" = "http://saythanks.io/to/example"
+"Source" = "https://github.com/pypa/sampleproject/"
+
+# provide a command line executable called `sample`
+# which executes the function `main` from this package when invoked.
+[project.scripts]
+sample = "sample:main"
+
+# configuration specific to the `setuptools` build backend.
+# If using a different build backend, you will need to change this.
+[tool.setuptools]
+# specify the data file needed by the package.
+package-data = {"sample" = ["*.dat"]}
