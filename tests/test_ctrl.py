@@ -22,7 +22,7 @@ def test_net_ctrl_comm():
     time.sleep(1)
     # 2. Create a client
     sender = ConNetController(_run_with_sudo=True)
-    
+
     for c in sender.find_all_containers("constellation-test-worker-"):
         sender.add_container(c)
         time.sleep(0.1)

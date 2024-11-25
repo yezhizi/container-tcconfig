@@ -1,7 +1,8 @@
 build
-flake8
+ruff
 setuptools
 wheel
 twine
 coverage
 mypy
+nox

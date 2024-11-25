@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .comm import NetCtrlCommClient
 from .msg import CtrlMsg, CtrlAction
 from ..cmd_wrapper import DockerCmdWrapper
@@ -6,14 +5,15 @@ from ..cmd_wrapper import DockerCmdWrapper
 
 class ConNetController:
     """Container network controller message sender.
-    This class is used to send control messages to the network controller.
+    This class is used to send control messages
+    to the network controller.
     Args:
         - socket_path (str) : path to the unix socket
     """
 
     def __init__(
         self,
-        prefix: str = None,
+        prefix: str = "",
         *,
         _socket_path: str = "/tmp/contcfg.sock",
         _run_with_sudo: bool = False,
@@ -22,7 +22,7 @@ class ConNetController:
         self._client = NetCtrlCommClient(self._socket_path)
         self._run_with_sudo = _run_with_sudo
         self._prefix = prefix
-        self._containers = []
+        self._containers: list[str] = []
 
     def add_container(self, container: str):
         """Add container to the network controller.
@@ -48,7 +48,7 @@ class ConNetController:
         self._client.send(CtrlMsg(CtrlAction.DEL_CONTAINER, container))
         self._containers.remove(container)
 
-    def find_all_containers(self, prefix: str = None):
+    def find_all_containers(self, prefix: str = ""):
         """Find all containers with given prefix."""
         prefix = prefix if prefix else self._prefix
         if not prefix:

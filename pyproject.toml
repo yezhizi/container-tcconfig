@@ -68,3 +68,14 @@ test = ["coverage"]
 [tool.setuptools]
 # specify the data file needed by the package.
 package-data = {"contcfg" = ["utils/scripts/*.sh"]}
+
+
+[tool.ruff]
+line-length = 80 
+select = [         
+    "F",
+    "E",
+    "W",
+    "UP",
+]
+ignore = ["F401"] 

@@ -32,10 +32,17 @@ def __test_pkg(session, pkg_path):
 
 @nox.session
 def lint(session):
-    session.install("flake8")
+    session.install("ruff")
     session.run(
-        "flake8", "--exclude", ".nox,*.egg,build,data",
-        "--select", "E,W,F", "."
+        "ruff",
+        "check",
+        "--exclude",
+        ".nox,*.egg,build,data",
+        "--select",
+        "E,W,F",
+        "--ignore",
+        "F401",
+        ".",
     )
     session.install("mypy")
     session.run("mypy", "src/", "--follow-imports=skip")
@@ -47,8 +54,11 @@ def build_and_check_dists(session):
     # If your project uses README.rst, uncomment the following:
     # session.install("readme_renderer")
 
-    session.run("check-manifest", "--ignore", "noxfile.py,tests/**,"
-                "Makefile,requirements-dev.txt")
+    session.run(
+        "check-manifest",
+        "--ignore",
+        "noxfile.py,tests/**," "Makefile,requirements-dev.txt",
+    )
     session.run("python", "-m", "build")
     session.run("python", "-m", "twine", "check", "dist/*")
 

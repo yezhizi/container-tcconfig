@@ -16,7 +16,7 @@ release:
 	python -m twine upload dist/*
 
 lint:
-	flake8 src/ tests/ --count --max-line-length=127 --ignore=W503
+	ruff check src/ tests/
 	mypy src/ --follow-imports=skip
 
 test:

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import socket
 import os
 import struct
@@ -7,25 +5,29 @@ import pickle
 import time
 import asyncio
 from asyncio import Queue
+from typing import Optional
 
 from .msg import CtrlMsg, CtrlAction
 
 
 class NetCtrlCommServer:
-    """Network control communication server. This class is used to create a unix socket server
-    to receive control messages from clients. Typically, only one client will connect to the server.
+    """Network control communication server.
+    This class is used to create a unix socket server
+    to receive control messages from clients.
+    Typically, only one client will connect to the server.
     Args:
         - socket_path (str) : path to the unix socket
     """
 
     def __init__(self, socket_path: str):
         self.socket_path = socket_path
-        self._server = None
+        self._server: Optional[asyncio.AbstractServer] = None
         self._stop_event = asyncio.Event()
         self._check_path()
 
     async def start(self, q: Queue):
-        """Start the server. This method will start the server and wait for incoming messages, and put
+        """Start the server. This method will start the server
+        and wait for incoming messages, and put
         them in the queue.
         Args:
             - q (Queue) : asyncio.Queue object to put incoming messages
@@ -107,7 +109,7 @@ class NetCtrlCommClient:
         self, socket_path: str, _conn_retry: int = 5, _retry_interval: int = 1
     ):
         self.socket_path = socket_path
-        self.conn = None
+        self.conn: Optional[socket.socket] = None
         self._conn_retry = _conn_retry
         self._retry_interval = _retry_interval
         self._connected = False
@@ -121,11 +123,14 @@ class NetCtrlCommClient:
                 break
             except ConnectionRefusedError:
                 print(
-                    f"Connection refused. Retrying in {self._retry_interval} seconds."
+                    f"Connection refused. Retrying \
+                    in {self._retry_interval} seconds."
                 )
                 time.sleep(self._retry_interval)
         else:
-            raise ConnectionRefusedError(f"Cound not connect to {self.socket_path}")
+            raise ConnectionRefusedError(
+                f"Cound not connect to {self.socket_path}"
+            )
         self._connected = True
 
     def send(self, data: CtrlMsg):
@@ -135,10 +140,15 @@ class NetCtrlCommClient:
 
         serialized_data = pickle.dumps(data)
         data_len = struct.pack(">I", len(serialized_data))
-        self.conn.sendall(data_len + serialized_data)
+        if self.conn is not None:
+            self.conn.sendall(data_len + serialized_data)
+        else:
+            raise ConnectionError("Connection is not established.")
 
     def stop(self):
-        """Stop the connection. This method will send a stop message to the server and close the connection."""
-        self.send(CtrlMsg(action=CtrlAction.STOP)) # send stop message
+        """Stop the connection. This method will send a stop message
+        to the server and close the connection.
+        """
+        self.send(CtrlMsg(action=CtrlAction.STOP))  # send stop message
         self.conn.close()
         self._connected = False

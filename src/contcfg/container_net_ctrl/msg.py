@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-
 from enum import Enum
 from dataclasses import dataclass
+from typing import Optional
 
 
 class CtrlAction(Enum):
@@ -14,4 +13,4 @@ class CtrlAction(Enum):
 @dataclass
 class CtrlMsg:
     action: CtrlAction
-    container: str = None
+    container: Optional[str] = None

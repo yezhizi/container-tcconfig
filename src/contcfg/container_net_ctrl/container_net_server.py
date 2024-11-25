@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import random
 import asyncio
 from asyncio import Queue
 import logging
+from typing import Optional
 
 
 from ..cmd_wrapper import (
@@ -22,7 +21,8 @@ logging.basicConfig(
 
 
 def all_pairs_iter(lst: list, paticular=None):
-    """Generate all pairs from a list. If paticular is given, generate pairs including paticular."""
+    """Generate all pairs from a list. If paticular is given,
+    generate pairs including paticular."""
     if paticular:
         for i in range(len(lst)):
             if lst[i] != paticular:
@@ -35,13 +35,16 @@ def all_pairs_iter(lst: list, paticular=None):
 
 class ConNetServer:
     """Container network controller class.
-    This class is used to control network bandwidth between docker containers.
+    This class is used to control network bandwidth
+    between docker containers.
     Args:
         - min_rate (int) : minimum rate in mbit
         - max_rate (int) : maximum rate in mbit
         - interval (int) : interval in seconds
-        - prefix (str, optional) : container name prefix. Default is None.
-        - _run_with_sudo (bool, optional) : run all commands with sudo. Default is False.
+        - prefix (str, optional) : container name prefix.
+        Default is None.
+        - _run_with_sudo (bool, optional) : run all commands with sudo.
+        Default is False.
     """
 
     def __init__(
@@ -50,7 +53,7 @@ class ConNetServer:
         max_rate: int,
         interval: int,
         *,
-        prefix: str = None,
+        prefix: str = "",
         _server_socket_path: str = "/tmp/contcfg.sock",
         _run_with_sudo: bool = False,
         **kwargs,
@@ -69,11 +72,11 @@ class ConNetServer:
         elif self.interval_unit.startswith("h"):
             self.interval_sec = interval * 3600
 
-        self._container_list = []
-        self._msg_queue = Queue()
+        self._container_list: list[str] = []
+        self._msg_queue: Queue = asyncio.Queue()
         self._is_running = False
-        self._limit_dict = {}
-        self._loop = None
+        self._limit_dict: dict[tuple[str, str], int] = {}
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._socket_path = _server_socket_path
 
     async def _monitor_and_adjust_network(self):
@@ -86,7 +89,9 @@ class ConNetServer:
                 break
             elif msg.action == CtrlAction.SET_BANDWIDTH:
                 # for each container pair, set bandwidth limit
-                for container1, container2 in all_pairs_iter(self._container_list):
+                for container1, container2 in all_pairs_iter(
+                    self._container_list
+                ):
                     self._set_bandwidth_limit(container1, container2)
             elif msg.action == CtrlAction.ADD_CONTAINER:
                 # adjust network for new container
@@ -125,12 +130,15 @@ class ConNetServer:
         """Show bandwidth limits between containers."""
         s = ""
         for (container1, container2), bandwidth in self._limit_dict.items():
-            s += f"{container1} <--> {container2} : {bandwidth} {self.rate_unit}\n"
+            s += (
+                f"{container1} <--> {container2} : {bandwidth} {self.rate_unit}"
+            )
+            s += "\n"
         if s:
             logging.info(f"Bandwidth limits:\n{s}")
 
     def _set_bandwidth_limit(
-        self, container1: str, container2: str, bandwidth: int = None
+        self, container1: str, container2: str, bandwidth: Optional[int] = None
     ):
         """Set bandwidth limit between two containers.
         Args:
@@ -153,5 +161,6 @@ class ConNetServer:
             print(f"Rate value error: {e}")
         except Exception as e:
             print(
-                f"Error setting bandwidth. Please check if tc is installed or set run_with_sudo=True: {e}"
+                f"Error setting bandwidth. Please check if tc is installed\
+                or set run_with_sudo=True: {e}"
             )

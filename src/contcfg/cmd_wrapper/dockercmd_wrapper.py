@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-
 import subprocess
-from typing import List
+from typing import List, Optional
 
 from .base import singleton, exec_cmd
 from .exception import ContainerNotFoundError
@@ -12,7 +10,8 @@ class DockerCmdWrapper:
     """docker command wrapper for managing docker containers.
     This class is a singleton, so only one instance will be created.
     Args:
-        - run_with_sudo (bool, optional) : run all commands with sudo. Default is False.
+        - run_with_sudo (bool, optional) : run all commands with sudo.
+        Default is False.
     """
 
     def __init__(self, run_with_sudo: bool = True):
@@ -34,7 +33,8 @@ class DockerCmdWrapper:
 
         Args:
             container (str): container name or id
-            _run_with_sudo (bool, optional): run command with sudo. Defaults to None.
+            _run_with_sudo (bool, optional): run command with sudo.
+            Defaults to None.
 
         Raises:
             e: subprocess.CalledProcessError if container not found
@@ -49,9 +49,11 @@ class DockerCmdWrapper:
                     f"Container {container} not found. "
                     f"Try to set _run_with_sudo=True."
                 ) from e
-            raise ContainerNotFoundError(f"Container {container} not found.") from e
+            raise ContainerNotFoundError(
+                f"Container {container} not found."
+            ) from e
 
-    def get_container(self, prefix: str = None) -> List[str]:
+    def get_container(self, prefix: Optional[str] = None) -> List[str]:
         """Get all containers with given prefix.
 
         Args:

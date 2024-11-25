@@ -36,6 +36,5 @@ def test_net_ctrl_comm():
 
 
 if __name__ == "__main__":
-
     test_net_ctrl_comm()
     assert q.qsize() == 20

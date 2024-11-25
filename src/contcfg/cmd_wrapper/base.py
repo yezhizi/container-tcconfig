@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
 from pathlib import Path
+from typing import Optional
 import subprocess
 
 
@@ -19,12 +18,14 @@ def check_scripts():
         "set_network_limit.sh",
     ]
     for script_name in script_names:
-        assert get_script(script_name).exists(), f"Script {script_name} not found"
+        assert get_script(script_name).exists(), f"Script {
+            script_name} not found"
 
 
 def singleton(cls):
     """Singleton decorator for classes.
-    Note: This decorator will call __init__ method every time the instance is created.
+    Note: This decorator will call __init__ method
+    every time the instance is created.
     """
     instances = {}
 
@@ -37,13 +38,20 @@ def singleton(cls):
     return get_instance
 
 
-def exec_cmd(cmd: str, run_with_sudo: bool = None, bash: bool = True, stdout=False):
+def exec_cmd(
+    cmd: str,
+    run_with_sudo: Optional[bool] = None,
+    bash: bool = True,
+    stdout=False,
+) -> subprocess.CompletedProcess:
     """Execute a command.
 
     Args:
-        cmd (str): command to execute
-        _run_with_sudo (bool, optional): run command with sudo. Defaults to None.
-        bash (bool, optional): run command with bash. Defaults to True.
+        - cmd (str): command to execute
+        - _run_with_sudo (bool, optional): run command with sudo.
+        Defaults to None.
+        - bash (bool, optional): run command with bash.
+        Defaults to True.
     """
 
     if bash and not cmd.strip().startswith("bash"):

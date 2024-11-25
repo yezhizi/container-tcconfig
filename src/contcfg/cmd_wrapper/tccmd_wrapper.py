@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from .base import check_scripts, get_script, singleton, exec_cmd
 from .dockercmd_wrapper import DockerCmdWrapper
 from .exception import RateValueError
@@ -7,10 +5,13 @@ from .exception import RateValueError
 
 @singleton
 class TCCmdWrapper:
-    """tc command wrapper for setting bandwidth limits between docker containers.
-    This class is a singleton, so only one instance will be created.
+    """tc command wrapper for setting bandwidth
+    limits between docker containers.
+    This class is a singleton,
+    so only one instance will be created.
     Args:
-        - run_with_sudo (bool, optional) : run all commands with sudo. Default is False.
+        - run_with_sudo (bool, optional) : run all commands with sudo.
+        Default is False.
     """
 
     def __init__(self, run_with_sudo: bool = False):
@@ -38,15 +39,17 @@ class TCCmdWrapper:
         container2: str,
         bandwidth: int,
         bandwidth_unit: str = "mbit",
-        _run_with_sudo: bool = None,
+        _run_with_sudo: bool = False,
     ):
         """Set bandwidth limit between two containers.
         Args:
             - container1 (str) : container name or id
             - container2 (str) : container name or id
             - bandwidth (int) : bandwidth limit
-            - bandwidth_unit (str, optional) : bandwidth unit. Default is "mbit".
-            - _run_with_sudo (bool, optional) : run command with sudo. Default is None.
+            - bandwidth_unit (str, optional) : bandwidth unit.
+            Default is "mbit".
+            - _run_with_sudo (bool, optional) : run command with sudo.
+            Default is None.
         """
         run_with_sudo = self._run_with_sudo or _run_with_sudo
         _check_container = DockerCmdWrapper(
@@ -56,9 +59,8 @@ class TCCmdWrapper:
         _check_container(container1)
         _check_container(container2)
         self._check_bandwidth(bandwidth, bandwidth_unit)
-        cmd = (
-            f"{self._exec_script} {container1} {container2} {bandwidth}{bandwidth_unit}"
-        )
+        cmd = f"{self._exec_script} {container1} {container2}"
+        "{bandwidth}{bandwidth_unit}"
         exec_cmd(cmd, run_with_sudo)
 
     def _check_bandwidth(self, bandwidth: int, bandwidth_unit: str):
