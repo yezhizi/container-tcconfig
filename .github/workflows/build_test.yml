@@ -25,3 +25,5 @@ jobs:
     #   run: python -m nox -s build_and_tests-${{ matrix.python }}
     - name: Lint
       run: python -m nox -s lint
+    - name: Release
+      run: python -m nox -s release

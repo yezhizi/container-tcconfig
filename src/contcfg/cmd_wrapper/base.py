@@ -18,8 +18,9 @@ def check_scripts():
         "set_network_limit.sh",
     ]
     for script_name in script_names:
-        assert get_script(script_name).exists(), f"Script {
-            script_name} not found"
+        assert get_script(
+            script_name
+        ).exists(), f"Script {script_name} not found"
 
 
 def singleton(cls):

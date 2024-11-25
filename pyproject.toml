@@ -1,8 +1,8 @@
 [build-system]
-# A list of packages that are needed to build package:
+
 requires = [
   "setuptools"
-]  # REQUIRED if [build-system] table is used
+]  
 
 build-backend = "setuptools.build_meta" 
 
@@ -14,25 +14,19 @@ description = "A simple tools for container network configuration using tc comma
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE.txt"}
-# keywords = ["sample", "setuptools", "development"]
+
 authors = [
   {name = "DeEMO", email = "yzzxrx@gmail.com" }
 ]
 maintainers = [
   {name = "DeEMO", email = "yzzxrx@gmail.com" }
 ]
-# For a list of valid classifiers, see https://pypi.org/classifiers/
+
 classifiers = [
-  # How mature is this project? Common values are
-  #   3 - Alpha
-  #   4 - Beta
-  #   5 - Production/Stable
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
 
-  # Specify the Python versions you support here. These classifiers are *not*
-  # checked by "pip install". See instead "requires-python" key in this file.
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
@@ -46,29 +40,14 @@ dependencies = [
 
 ]
 
-# if `pip install sampleproject[dev]`, then the "check-manifest" will be installed
 [project.optional-dependencies]
 dev = ["check-manifest"]
 test = ["coverage"]
 
-# [project.urls]
-# "Homepage" = "https://github.com/pypa/sampleproject"
-# "Bug Reports" = "https://github.com/pypa/sampleproject/issues"
-# "Funding" = "https://donate.pypi.org"
-# "Say Thanks!" = "http://saythanks.io/to/example"
-# "Source" = "https://github.com/pypa/sampleproject/"
-
-# provide a command line executable called `sample`
-# which executes the function `main` from this package when invoked.
-# [project.scripts]
-# sample = "sample:main"
-
-# configuration specific to the `setuptools` build backend.
-# If using a different build backend, you will need to change this.
 [tool.setuptools]
-# specify the data file needed by the package.
 package-data = {"contcfg" = ["utils/scripts/*.sh"]}
-[dynamic]
+
+[tool.setuptools.dynamic]
 version = {attr = "contcfg.__version__"}
 
 [tool.ruff]
