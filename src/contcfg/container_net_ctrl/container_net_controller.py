@@ -2,6 +2,8 @@ from .comm import NetCtrlCommClient
 from .msg import CtrlMsg, CtrlAction
 from ..cmd_wrapper import DockerCmdWrapper
 
+from typing import List
+
 
 class ConNetController:
     """Container network controller message sender.
@@ -22,7 +24,7 @@ class ConNetController:
         self._client = NetCtrlCommClient(self._socket_path)
         self._run_with_sudo = _run_with_sudo
         self._prefix = prefix
-        self._containers: list[str] = []
+        self._containers: List[str] = []
 
     def add_container(self, container: str):
         """Add container to the network controller.

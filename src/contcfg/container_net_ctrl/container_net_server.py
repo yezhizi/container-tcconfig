@@ -2,7 +2,7 @@ import random
 import asyncio
 from asyncio import Queue
 import logging
-from typing import Optional
+from typing import Optional, List, Tuple, Dict
 
 
 from ..cmd_wrapper import (
@@ -72,10 +72,10 @@ class ConNetServer:
         elif self.interval_unit.startswith("h"):
             self.interval_sec = interval * 3600
 
-        self._container_list: list[str] = []
+        self._container_list: List[str] = []
         self._msg_queue: Queue = asyncio.Queue()
         self._is_running = False
-        self._limit_dict: dict[tuple[str, str], int] = {}
+        self._limit_dict: Dict[Tuple[str, str], int] = {}
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._socket_path = _server_socket_path
 
