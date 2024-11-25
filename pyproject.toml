@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "contcfg"  # REQUIRED, is the only field that cannot be marked as dynamic.
-version = "0.0.1"  # REQUIRED, although can be dynamic
+dynamic = ["version"]
 description = "A simple tools for container network configuration using tc command."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -68,7 +68,8 @@ test = ["coverage"]
 [tool.setuptools]
 # specify the data file needed by the package.
 package-data = {"contcfg" = ["utils/scripts/*.sh"]}
-
+[dynamic]
+version = {attr = "contcfg.__version__"}
 
 [tool.ruff]
 line-length = 80 
