@@ -53,6 +53,22 @@ class DockerCmdWrapper:
                 f"Container {container} not found."
             ) from e
 
+    def is_container_exist(self, container: str) -> bool:
+        """Check if container exists.
+
+        Args:
+            container (str): container name or id
+
+        Returns:
+            bool: True if container exists, False otherwise
+        """
+        cmd = f"docker inspect {container}"
+        try:
+            exec_cmd(cmd, self._run_with_sudo, bash=False)
+        except subprocess.CalledProcessError:
+            return False
+        return True
+
     def get_container(self, prefix: Optional[str] = None) -> List[str]:
         """Get all containers with given prefix.
 

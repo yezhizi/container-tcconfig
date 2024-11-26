@@ -7,7 +7,7 @@ from contcfg.container_net_ctrl import CtrlMsg, CtrlAction
 
 def test_net_ctrl_comm():
     # 1. Create a server
-    controller = ConNetServer(
+    server = ConNetServer(
         min_rate=1,
         max_rate=10,
         interval=5,
@@ -16,7 +16,7 @@ def test_net_ctrl_comm():
         interval_unit="s",
         _run_with_sudo=True,
     )
-    task = mp.Process(target=controller.start)
+    task = mp.Process(target=server.start)
     task.start()
 
     time.sleep(1)
@@ -28,7 +28,7 @@ def test_net_ctrl_comm():
         time.sleep(0.1)
 
     # 4. Stop
-    sender.stop()
+    sender.stop_server()
     task.join()
     print("Test finished.")
 

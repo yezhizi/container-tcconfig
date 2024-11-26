@@ -67,7 +67,7 @@ class NetCtrlCommServer:
             try:
                 os.remove(self.socket_path)
             except OSError as e:
-                raise OSError(f"无法删除套接字文件: {self.socket_path}") from e
+                raise OSError(f"Error removing socket file: {e}")
 
     async def _handle_client(self, reader, writer, q: Queue):
         """Handle the client connection."""
@@ -116,6 +116,7 @@ class NetCtrlCommClient:
         self._connect()
 
     def _connect(self):
+        self._check_path()
         for _ in range(self._conn_retry):
             try:
                 self.conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -145,10 +146,21 @@ class NetCtrlCommClient:
         else:
             raise ConnectionError("Connection is not established.")
 
-    def stop(self):
-        """Stop the connection. This method will send a stop message
+    def stop_server(self):
+        """Stop the server. This method will send a stop message
         to the server and close the connection.
         """
         self.send(CtrlMsg(action=CtrlAction.STOP))  # send stop message
+        self.stop()
+
+    def stop(self):
+        """Stop the client."""
         self.conn.close()
         self._connected = False
+
+    def _check_path(self):
+        """Check if the socket path exists, and remove it if it does."""
+        if not os.path.exists(self.socket_path):
+            raise FileNotFoundError(
+                f"Socker file not found: {self.socket_path}"
+            )

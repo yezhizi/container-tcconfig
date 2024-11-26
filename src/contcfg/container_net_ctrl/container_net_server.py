@@ -7,11 +7,12 @@ from typing import Optional, List, Tuple, Dict
 
 from ..cmd_wrapper import (
     TCCmdWrapper,
+    DockerCmdWrapper,
     RateValueError,
     ContainerNotFoundError,
 )
 from .msg import CtrlMsg, CtrlAction
-from .comm import NetCtrlCommServer, NetCtrlCommClient
+from .comm import NetCtrlCommServer
 
 __all__ = ["ConNetServer"]
 
@@ -42,6 +43,11 @@ class ConNetServer:
         - max_rate (int) : maximum rate in mbit
         - interval (int) : interval in seconds
         - prefix (str, optional) : container name prefix.
+        - _server_socket_path (str, optional) : path to the Unix socket.
+        - _run_with_sudo (bool, optional) : run all commands with sudo.
+    Kwargs:
+        - rate_unit (str, optional) : rate unit. Default is "mbit".
+        - interval_unit (str, optional) : interval unit. Default is "min".
         Default is None.
         - _run_with_sudo (bool, optional) : run all commands with sudo.
         Default is False.
@@ -86,6 +92,9 @@ class ConNetServer:
             logging.debug(f"Received message: {msg}")
             if msg.action == CtrlAction.STOP:
                 self._is_running = False
+                # clear all bandwidth limits
+                for container in self._container_list:
+                    self._clear_one(container)
                 break
             elif msg.action == CtrlAction.SET_BANDWIDTH:
                 # for each container pair, set bandwidth limit
@@ -94,16 +103,31 @@ class ConNetServer:
                 ):
                     self._set_bandwidth_limit(container1, container2)
             elif msg.action == CtrlAction.ADD_CONTAINER:
+                if msg.container in self._container_list:
+                    logging.warning(
+                        f"Recv ADD_CONTAINER. the container {msg.container} "
+                        + "is already in the list"
+                    )
+                    continue
                 # adjust network for new container
                 for container1, container2 in all_pairs_iter(
                     self._container_list, msg.container
                 ):
                     self._set_bandwidth_limit(container1, container2)
-                # add new container to list
                 self._container_list.append(msg.container)
             elif msg.action == CtrlAction.DEL_CONTAINER:
-                # remove container from list
+                if msg.container not in self._container_list:
+                    logging.warning(
+                        f"Recv DEL_CONTAINER. the container {msg.container} "
+                        + "is not in the list"
+                    )
+                    continue
                 self._container_list.remove(msg.container)
+                # clear bandwidth limit for the container
+                if DockerCmdWrapper(self._run_with_sudo).is_container_exist(
+                    msg.container
+                ):
+                    self._clear_one(msg.container)
             # show bandwidth limits
             self._show_bandwidth_limits()
 
@@ -156,11 +180,20 @@ class ConNetServer:
             )
             self._limit_dict[(container1, container2)] = bandwidth
         except ContainerNotFoundError:
-            print(f"Container {container1} or {container2} not found")
+            logging.error(f"Container {container1} or {container2} not found")
         except RateValueError as e:
-            print(f"Rate value error: {e}")
+            logging.error(f"Rate value error: {e}")
         except Exception as e:
-            print(
-                f"Error setting bandwidth. Please check if tc is installed\
-                or set run_with_sudo=True: {e}"
+            logging.error(
+                "Error setting bandwidth. Please check if tc is installed"
+                + f" or run with sudo: {e}"
             )
+
+    def _clear_one(self, container1: str):
+        """Clear tc rules for one container."""
+        try:
+            TCCmdWrapper(self._run_with_sudo).clear_one_container(container1)
+        except ContainerNotFoundError:
+            logging.error(f"Container {container1} not found")
+        except Exception as e:
+            logging.error(f"Error clearing bandwidth limit: {e}")
