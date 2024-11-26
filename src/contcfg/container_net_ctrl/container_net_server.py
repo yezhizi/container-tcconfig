@@ -82,7 +82,8 @@ class ConNetServer:
         self._msg_queue: Queue = asyncio.Queue()
         self._is_running = False
         self._limit_dict: Dict[Tuple[str, str], int] = {}
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._stop_event = asyncio.Event()
+        self._loop = asyncio.get_event_loop()
         self._socket_path = _server_socket_path
 
     async def _monitor_and_adjust_network(self):
@@ -92,6 +93,7 @@ class ConNetServer:
             logging.debug(f"Received message: {msg}")
             if msg.action == CtrlAction.STOP:
                 self._is_running = False
+                self._stop_event.set()
                 # clear all bandwidth limits
                 for container in self._container_list:
                     self._clear_one(container)
@@ -134,8 +136,12 @@ class ConNetServer:
     async def _periodic_clock(self):
         """Periodic clock to trigger network adjustment."""
         while self._is_running:
-            await asyncio.sleep(self.interval_sec)
-            await self._msg_queue.put(CtrlMsg(CtrlAction.SET_BANDWIDTH))
+            try:
+                await asyncio.wait_for(
+                    self._stop_event.wait(), timeout=self.interval_sec
+                )
+            except asyncio.TimeoutError:
+                await self._msg_queue.put(CtrlMsg(CtrlAction.SET_BANDWIDTH))
         # stop the loop
         self._loop.stop()
 
@@ -143,12 +149,11 @@ class ConNetServer:
         """start monitoring and adjusting network."""
         server = NetCtrlCommServer(self._socket_path)
         self._is_running = True
-        loop = asyncio.get_event_loop()
-        self._loop = loop
-        loop.create_task(self._monitor_and_adjust_network())
-        loop.create_task(self._periodic_clock())
-        loop.create_task(server.start(self._msg_queue))
-        loop.run_forever()
+
+        self._loop.create_task(self._monitor_and_adjust_network())
+        self._loop.create_task(self._periodic_clock())
+        self._loop.create_task(server.start(self._msg_queue))
+        self._loop.run_forever()
 
     def _show_bandwidth_limits(self):
         """Show bandwidth limits between containers."""

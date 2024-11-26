@@ -59,6 +59,10 @@ class ConNetController:
         containers = DockerCmdWrapper(self._run_with_sudo).get_container(prefix)
         return containers
 
+    def stop_server(self):
+        """Stop the server."""
+        self._client.stop_server()
+
     def stop(self):
         """Stop the client."""
         self._client.stop()
