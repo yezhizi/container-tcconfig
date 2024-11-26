@@ -40,6 +40,9 @@ dependencies = [
 
 ]
 
+[project.scripts]
+contcfg = "contcfg.main:main"
+
 [project.optional-dependencies]
 dev = ["check-manifest"]
 test = ["coverage"]
