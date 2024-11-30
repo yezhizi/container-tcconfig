@@ -106,10 +106,6 @@ class ConNetServer:
                     self._set_bandwidth_limit(container1, container2)
             elif msg.action == CtrlAction.ADD_CONTAINER:
                 if msg.container in self._container_list:
-                    logging.warning(
-                        f"Recv ADD_CONTAINER. the container {msg.container} "
-                        + "is already in the list"
-                    )
                     continue
                 # adjust network for new container
                 for container1, container2 in all_pairs_iter(

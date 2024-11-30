@@ -43,6 +43,8 @@ def ctrl(args):
         sender.add_container(args.container)
     elif args.ctrl_command == "del":
         sender.del_container(args.container)
+    elif args.ctrl_command == "add-all":
+        sender.add_container(args.container)
     sender.stop()
 
 
@@ -91,6 +93,7 @@ def create_parser():
     ctrl_subparsers = ctrl_parser.add_subparsers(
         dest="ctrl_command", help="Control sub-command help"
     )
+    # Add and delete container sub-commands
     for action in ["add", "del"]:
         sub_parser = ctrl_subparsers.add_parser(
             action, help=f"{action.capitalize()} container"
@@ -98,6 +101,11 @@ def create_parser():
         sub_parser.add_argument(
             "container", type=str, help="Container name or id"
         )
+    # Add all containers sub-command
+    sub_parser = ctrl_subparsers.add_parser(
+        "add-all", help="Add all containers"
+    )
+    sub_parser.add_argument("prefix", type=str, help="Container name prefix")
 
     # Stop server sub-command
     subparsers.add_parser("stop-server", help="Stop the server")

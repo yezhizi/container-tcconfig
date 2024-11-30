@@ -59,6 +59,13 @@ class ConNetController:
         containers = DockerCmdWrapper(self._run_with_sudo).get_container(prefix)
         return containers
 
+    def add_all_containers(self, prefix: str):
+        """Add all containers with given prefix."""
+        containers = self.find_all_containers(prefix)
+        for container in containers:
+            if container not in self._containers:
+                self.add_container(container)
+
     def stop_server(self):
         """Stop the server."""
         self._client.stop_server()
