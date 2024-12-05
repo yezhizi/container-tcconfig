@@ -1,0 +1,47 @@
+version: "3.8"
+
+# client template
+x-client-template: &client-template
+  build:
+    context: ./
+    dockerfile: Dockerfile
+  image: iperf-image
+  cap_add:
+    - NET_ADMIN
+  networks:
+    - iperf-network
+  depends_on:
+    - iperf-server
+
+services:
+  iperf-server:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: iperf-image
+    container_name: iperf-server
+    networks:
+      - iperf-network
+    cap_add:
+      - NET_ADMIN
+    command: bash -c "iperf3 -s"
+
+  iperf-client-1:
+    <<: *client-template
+    command: bash -c "sleep 35 && iperf3 -c iperf-server -t 3 && sleep infinity"
+
+  iperf-client-2:
+    <<: *client-template
+    command: bash -c "sleep 40 && iperf3 -c iperf-server -t 3 && sleep infinity"
+
+  iperf-client-3:
+    <<: *client-template
+    command: bash -c "sleep 45 && iperf3 -c iperf-server -t 3 && sleep infinity"
+
+  iperf-client-4:
+    <<: *client-template
+    command: bash -c "sleep 50 && iperf3 -c iperf-server -t 3 && sleep infinity"
+
+networks:
+  iperf-network:
+    driver: bridge
