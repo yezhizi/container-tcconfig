@@ -1,7 +1,9 @@
 from .base import check_scripts, get_script, singleton, exec_cmd
+from .tc_base import TC_BANDWIDTH_UNITS, split_raw_str_rate
 from .dockercmd_wrapper import DockerCmdWrapper
 from .exception import RateValueError
 
+from typing import Union
 
 @singleton
 class TCCmdWrapper:
@@ -19,25 +21,14 @@ class TCCmdWrapper:
             check_scripts()  # check if all scripts are present
             self._exec_script = get_script("docker_tcconfig.sh")
             self._initialized = True
-            self._rate_units = [
-                "bit",
-                "kbit",
-                "mbit",
-                "gbit",
-                "tbit",
-                "bps",
-                "kbps",
-                "mbps",
-                "gbps",
-                "tbps",
-            ]
+
         self._run_with_sudo = run_with_sudo
 
     def set_bandwidth(
         self,
         container1: str,
         container2: str,
-        bandwidth: int,
+        bandwidth: Union[int, str],
         bandwidth_unit: str = "mbit",
         _run_with_sudo: bool = False,
     ):
@@ -51,6 +42,8 @@ class TCCmdWrapper:
             - _run_with_sudo (bool, optional) : run command with sudo.
             Default is None.
         """
+        if isinstance(bandwidth, str):
+            bandwidth, bandwidth_unit = split_raw_str_rate(bandwidth)
         run_with_sudo = self._run_with_sudo or _run_with_sudo
         _check_container = DockerCmdWrapper(
             run_with_sudo
@@ -78,7 +71,7 @@ class TCCmdWrapper:
             exec_cmd(cmd, run_with_sudo)
 
     def _check_bandwidth(self, bandwidth: int, bandwidth_unit: str):
-        if bandwidth_unit not in self._rate_units:
+        if bandwidth_unit not in TC_BANDWIDTH_UNITS:
             raise RateValueError(f"Invalid bandwidth unit {bandwidth_unit}")
         if bandwidth < 0:
             raise RateValueError(f"Invalid bandwidth {bandwidth}")
