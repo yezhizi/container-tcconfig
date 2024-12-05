@@ -129,9 +129,11 @@ def create_parser():
     )
     # Set bandwidth sub-command
     sub_parser = cli_subparsers.add_parser("set", help="Set bandwidth")
+
     sub_parser.add_argument("container1", type=str, help="Container name or id")
     sub_parser.add_argument("container2", type=str, help="Container name or id")
     sub_parser.add_argument("bandwidth", type=str, help="Bandwidth limit")
+
     # Clear bandwidth sub-command
     sub_parser = cli_subparsers.add_parser("clear", help="Clear bandwidth")
     sub_parser.add_argument(
