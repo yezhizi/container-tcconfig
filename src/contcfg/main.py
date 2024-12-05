@@ -117,11 +117,6 @@ def create_parser():
         "add-all", help="Add all containers"
     )
     sub_parser.add_argument("prefix", type=str, help="Container name prefix")
-    # Add all containers sub-command
-    sub_parser = ctrl_subparsers.add_parser(
-        "add-all", help="Add all containers"
-    )
-    sub_parser.add_argument("prefix", type=str, help="Container name prefix")
 
     # Stop server sub-command
     subparsers.add_parser("stop-server", help="Stop the server")

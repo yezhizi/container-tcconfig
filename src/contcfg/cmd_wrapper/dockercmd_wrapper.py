@@ -1,5 +1,5 @@
 import subprocess
-from typing import List, Optional
+from typing import Optional
 
 from .base import singleton, exec_cmd
 from .exception import ContainerNotFoundError
@@ -69,13 +69,13 @@ class DockerCmdWrapper:
             return False
         return True
 
-    def get_container(self, prefix: Optional[str] = None) -> List[str]:
+    def get_container(self, prefix: Optional[str] = None) -> list[str]:
         """Get all containers with given prefix.
 
         Args:
             - prefix (str, optional): container name prefix. Default is None.
         """
-        cmd = "docker ps -a --format '{{.Names}}'"
+        cmd = "docker ps --format '{{.Names}}'"
         if prefix:
             cmd += f" | grep {prefix}"
         return (

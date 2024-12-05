@@ -1,5 +1,3 @@
-from typing import Tuple
-
 TC_BANDWIDTH_UNITS = [
     "kbit",
     "mbit",
@@ -15,7 +13,7 @@ TC_BANDWIDTH_UNITS = [
 ]
 
 
-def split_raw_str_rate(rate: str) -> Tuple[int, str]:
+def split_raw_str_rate(rate: str) -> tuple[int, str]:
     """Split raw string rate into rate and unit.
     Args:
         - rate (str) : raw string rate. e.g. "100mbit"

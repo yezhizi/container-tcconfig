@@ -12,7 +12,7 @@ name = "contcfg"  # REQUIRED, is the only field that cannot be marked as dynamic
 dynamic = ["version"]
 description = "A simple tools for container network configuration using tc command."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE.txt"}
 
 authors = [
