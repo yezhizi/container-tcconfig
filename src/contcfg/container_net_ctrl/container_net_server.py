@@ -2,7 +2,8 @@ import random
 import asyncio
 from asyncio import Queue
 import logging
-from typing import Optional, List, Tuple, Dict
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
 
 
 from ..cmd_wrapper import (
@@ -78,56 +79,91 @@ class ConNetServer:
         elif self.interval_unit.startswith("h"):
             self.interval_sec = interval * 3600
 
-        self._container_list: List[str] = []
+        self._container_list: list[str] = []
         self._msg_queue: Queue = asyncio.Queue()
         self._is_running = False
-        self._limit_dict: Dict[Tuple[str, str], int] = {}
+        self._limit_dict: dict[tuple[str, str], int] = {}
         self._stop_event = asyncio.Event()
         self._loop = asyncio.get_event_loop()
         self._socket_path = _server_socket_path
 
     async def _monitor_and_adjust_network(self):
         """Monitor and adjust network bandwidth between containers."""
-        while True:
-            msg = await self._msg_queue.get()
-            logging.debug(f"Received message: {msg}")
-            if msg.action == CtrlAction.STOP:
-                self._is_running = False
-                self._stop_event.set()
-                # clear all bandwidth limits
-                for container in self._container_list:
-                    self._clear_one(container)
-                break
-            elif msg.action == CtrlAction.SET_BANDWIDTH:
-                # for each container pair, set bandwidth limit
-                for container1, container2 in all_pairs_iter(
-                    self._container_list
-                ):
-                    self._set_bandwidth_limit(container1, container2)
-            elif msg.action == CtrlAction.ADD_CONTAINER:
-                if msg.container in self._container_list:
-                    continue
-                # adjust network for new container
-                for container1, container2 in all_pairs_iter(
-                    self._container_list, msg.container
-                ):
-                    self._set_bandwidth_limit(container1, container2)
-                self._container_list.append(msg.container)
-            elif msg.action == CtrlAction.DEL_CONTAINER:
-                if msg.container not in self._container_list:
-                    logging.warning(
-                        f"Recv DEL_CONTAINER. the container {msg.container} "
-                        + "is not in the list"
+        with ThreadPoolExecutor() as executor:
+            while True:
+                msg = await self._msg_queue.get()
+                logging.debug(f"Received message: {msg}")
+                if msg.action == CtrlAction.STOP:
+                    # clear all bandwidth limits
+                    tasks = []
+                    for container in self._container_list:
+                        tasks.append(
+                            self._loop.run_in_executor(
+                                executor, self._clear_one, container, True
+                            )
+                        )
+                    # wait for all tasks to complete
+                    await asyncio.gather(*tasks)
+                    # set stop event
+                    self._is_running = False
+                    self._stop_event.set()
+                    break
+                elif msg.action == CtrlAction.SET_BANDWIDTH:
+                    # for each container pair, set bandwidth limit
+                    tasks = []
+                    for container1, container2 in all_pairs_iter(
+                        self._container_list
+                    ):
+                        tasks.append(
+                            self._loop.run_in_executor(
+                                executor,
+                                self._set_bandwidth_limit,
+                                container1,
+                                container2,
+                            )
+                        )
+                    # wait for all tasks to complete
+                    await asyncio.gather(*tasks)
+                elif msg.action == CtrlAction.ADD_CONTAINER:
+                    # adjust network for new container
+                    if msg.container in self._container_list:
+                        continue
+
+                    # initialize htb qdisc for the container. This is required
+                    # because executor may call tc command
+                    # in one container at a time,
+                    # which may cause setting failed.
+                    self._init_container_htb(msg.container)
+
+                    tasks = []
+                    for container1, container2 in all_pairs_iter(
+                        self._container_list, msg.container
+                    ):
+                        tasks.append(
+                            self._loop.run_in_executor(
+                                executor,
+                                self._set_bandwidth_limit,
+                                container1,
+                                container2,
+                            )
+                        )
+                    # wait for all tasks to complete
+                    await asyncio.gather(*tasks)
+                    self._container_list.append(msg.container)
+                elif msg.action == CtrlAction.DEL_CONTAINER:
+                    if msg.container not in self._container_list:
+                        logging.warning(
+                            f"Recv DEL_CONTAINER. the container {msg.container}"
+                            + " is not in the list"
+                        )
+                        continue
+                    # clear bandwidth limit for the container
+                    await self._loop.run_in_executor(
+                        executor, self._clear_one, msg.container, True
                     )
-                    continue
-                self._container_list.remove(msg.container)
-                # clear bandwidth limit for the container
-                if DockerCmdWrapper(self._run_with_sudo).is_container_exist(
-                    msg.container
-                ):
-                    self._clear_one(msg.container)
-            # show bandwidth limits
-            self._show_bandwidth_limits()
+                    self._container_list.remove(msg.container)
+                # show bandwidth limits
+                self._show_bandwidth_limits()
 
     async def _periodic_clock(self):
         """Periodic clock to trigger network adjustment."""
@@ -162,6 +198,15 @@ class ConNetServer:
         if s:
             logging.info(f"Bandwidth limits:\n{s}")
 
+    def _init_container_htb(self, container: str):
+        """Initialize htb qdisc for container."""
+        try:
+            TCCmdWrapper(self._run_with_sudo).init_htb(container)
+        except ContainerNotFoundError:
+            logging.error(f"Container {container} not found")
+        except Exception as e:
+            logging.error(f"Error initializing htb: {e}")
+
     def _set_bandwidth_limit(
         self, container1: str, container2: str, bandwidth: Optional[int] = None
     ):
@@ -190,11 +235,16 @@ class ConNetServer:
                 + f" or run with sudo: {e}"
             )
 
-    def _clear_one(self, container1: str):
+    def _clear_one(self, container: str, check_exist: bool = False):
         """Clear tc rules for one container."""
+        if check_exist:
+            if not DockerCmdWrapper(self._run_with_sudo).is_container_exist(
+                container
+            ):
+                return
         try:
-            TCCmdWrapper(self._run_with_sudo).clear_one_container(container1)
+            TCCmdWrapper(self._run_with_sudo).clear_one_container(container)
         except ContainerNotFoundError:
-            logging.error(f"Container {container1} not found")
+            logging.error(f"Container {container} not found")
         except Exception as e:
             logging.error(f"Error clearing bandwidth limit: {e}")

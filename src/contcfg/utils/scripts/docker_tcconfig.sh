@@ -7,8 +7,10 @@
 # Usage:
 #   sudo ./docker_tcconfig.sh [OPTIONS] <CONTAINER1> <CONTAINER2> <RATE>
 #   sudo ./docker_tcconfig.sh [OPTIONS] -c <CONTAINER>
+#   sudo ./docker_tcconfig.sh [OPTIONS] -init <CONTAINER>
 # Options:
 #   -c                  Clear bandwidth limits for specified containers
+#   -init               Initialize HTB on the specified container
 #   -d                  Enable debug output
 #   --iface1 INTERFACE  Network interface for CONTAINER1 (default: eth0)
 #   --iface2 INTERFACE  Network interface for CONTAINER2 (default: eth0)
@@ -18,6 +20,9 @@
 #
 #   # Clear bandwidth for a single container
 #   sudo ./docker_tcconfig.sh -c container1 [container2, container3, ...]
+#
+#   # Initialize HTB on a container
+#   sudo ./docker_tcconfig.sh -init container1 [container2, container3, ...]
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -30,6 +35,7 @@ usage() {
     echo
     echo "Options:"
     echo "  -c                  Clear bandwidth limits for the specified container"
+    echo "  -init               Initialize HTB on the specified container"
     echo "  -d                  Enable debug output"
     echo "  --iface1 INTERFACE  Network interface for CONTAINER1 (default: eth0)"
     echo "  --iface2 INTERFACE  Network interface for CONTAINER2 (default: eth0)"
@@ -43,7 +49,10 @@ usage() {
     echo "  sudo $0 --iface1 eth0 --iface2 eth1 container1 container2 1mbit"
     echo
     echo "Example (Clear):"
-    echo "  sudo $0 -c container1 [container2, container3, ...]"
+    echo "  sudo $0 -c container1 [container2 container3, ...]"
+    echo
+    echo "Example (Init):"
+    echo "  sudo $0 -init container1 [container2 container3 ...]"
     exit 1
 }
 
@@ -71,6 +80,7 @@ iface2="eth0"
 # -----------------------------------------------------------------------------
 ACTION="set"
 CLEAR_CONTAINERS=()
+INIT_CONTAINERS=()
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -c)
@@ -78,6 +88,14 @@ while [[ "$#" -gt 0 ]]; do
             shift
             while [[ "$#" -gt 0 && "$1" != -* ]]; do
                 CLEAR_CONTAINERS+=("$1")
+                shift
+            done
+            ;;
+        -init)
+            ACTION="init"
+            shift
+            while [[ "$#" -gt 0 && ! "$1" =~ ^- ]]; do
+                INIT_CONTAINERS+=("$1")
                 shift
             done
             ;;
@@ -119,6 +137,11 @@ elif [[ "$ACTION" == "clear" ]]; then
         echo "Error: No containers specified for clearing bandwidth."
         usage
     fi
+elif [[ "$ACTION" == "init" ]]; then
+    if [ "${#INIT_CONTAINERS[@]}" -eq 0 ]; then
+        echo "Error: No containers specified for initializing HTB."
+        usage
+    fi
 else
     echo "Error: Unknown action."
     usage
@@ -139,6 +162,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FIND_IP_SCRIPT="$SCRIPT_DIR/find_container_ip.sh"
 SET_TC_SCRIPT="$SCRIPT_DIR/set_network_limit.sh"
 CLEAR_TC_SCRIPT="$SCRIPT_DIR/clear_tc_rules.sh"
+FUNCTIONS_SCRIPT="$SCRIPT_DIR/functions.sh"
 
 if [[ "$ACTION" == "set" ]]; then
     if [[ ! -x "$FIND_IP_SCRIPT" ]]; then
@@ -155,6 +179,12 @@ elif [[ "$ACTION" == "clear" ]]; then
         echo "Error: Cannot find or execute $CLEAR_TC_SCRIPT."
         exit 1
     fi
+elif [[ "$ACTION" == "init" ]]; then
+    if [[ ! -x "$FUNCTIONS_SCRIPT" ]]; then
+        echo "Error: Cannot find or execute $FUNCTIONS_SCRIPT."
+        exit 1
+    fi
+    source "$FUNCTIONS_SCRIPT"
 fi
 
 # -----------------------------------------------------------------------------
@@ -243,6 +273,17 @@ elif [[ "$ACTION" == "clear" ]]; then
         clear_tc_rules "$container" "$iface1"
 
         debug "Bandwidth limits for container '$container' have been successfully cleared."
+    done
+elif [[ "$ACTION" == "init" ]]; then
+    for container in "${INIT_CONTAINERS[@]}"; do
+        debug "Initializing HTB on interface $iface1 in container $container..."
+        init_htb "$container" "$iface1"
+
+        if [[ $? -ne 0 ]]; then
+            echo "Error: Failed to initialize HTB on $iface1 in container $container."
+            exit 1
+        fi
+        debug "Successfully initialized HTB on $iface1 in container $container."
     done
 fi
 

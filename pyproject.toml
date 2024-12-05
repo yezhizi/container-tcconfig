@@ -55,10 +55,10 @@ version = {attr = "contcfg.__version__"}
 
 [tool.ruff]
 line-length = 80 
-select = [         
+lint.select = [         
     "F",
     "E",
     "W",
     "UP",
 ]
-ignore = ["F401"] 
+lint.ignore = ["F401"] 

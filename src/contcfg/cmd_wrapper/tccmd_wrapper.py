@@ -5,6 +5,7 @@ from .exception import RateValueError
 
 from typing import Union
 
+
 @singleton
 class TCCmdWrapper:
     """tc command wrapper for setting bandwidth
@@ -56,6 +57,18 @@ class TCCmdWrapper:
             f"{self._exec_script} {container1} {container2} "
             + f"{bandwidth}{bandwidth_unit}"
         )
+        exec_cmd(cmd, run_with_sudo)
+
+    def init_htb(self, container: str, _run_with_sudo: bool = False):
+        """Initialize htb qdisc for container.
+        Args:
+            - container (str) : container name or id
+            - _run_with_sudo (bool, optional) : run command with sudo.
+            Default is None.
+        """
+        run_with_sudo = self._run_with_sudo or _run_with_sudo
+        DockerCmdWrapper(run_with_sudo).check_container(container)
+        cmd = f"{self._exec_script} -init {container}"
         exec_cmd(cmd, run_with_sudo)
 
     def clear_one_container(self, container: str, _run_with_sudo: bool = False):
