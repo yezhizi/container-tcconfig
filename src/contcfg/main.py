@@ -3,6 +3,7 @@ import sys
 import os
 import contcfg
 from contcfg import ConNetServer, ConNetController, TCCmdWrapper
+from contcfg.cmd_wrapper import split_raw_str_rate
 
 __version__ = contcfg.__version__
 
@@ -28,11 +29,15 @@ def handle_exception(func):
 
 @handle_exception
 def start_server(args, run_with_sudo):
+    min_rate, min_unit = split_raw_str_rate(args.min_rate)
+    max_rate, max_unit = split_raw_str_rate(args.max_rate)
+    if min_unit != max_unit:
+        raise ValueError("Rate units do not match. Please provide same units.")
     server = ConNetServer(
-        args.min_rate,
-        args.max_rate,
+        min_rate,
+        max_rate,
         args.interval,
-        rate_unit="mbit",
+        rate_unit="min_unit",
         interval_unit="min",
         _run_with_sudo=run_with_sudo,
     )
@@ -91,13 +96,9 @@ def create_parser():
     server_parser = subparsers.add_parser(
         "start-server", help="Start the server"
     )
-    server_parser.add_argument(
-        "min_rate", type=int, help="Minimum rate in mbit"
-    )
-    server_parser.add_argument(
-        "max_rate", type=int, help="Maximum rate in mbit"
-    )
-    server_parser.add_argument("interval", type=int, help="Interval in seconds")
+    server_parser.add_argument("min_rate", type=str, help="Minimum rate")
+    server_parser.add_argument("max_rate", type=str, help="Maximum rate")
+    server_parser.add_argument("interval", type=int, help="Interval in minutes")
 
     # Control server sub-command
     ctrl_parser = subparsers.add_parser("ctrl", help="Control the server")

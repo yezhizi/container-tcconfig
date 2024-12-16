@@ -17,6 +17,7 @@ def split_raw_str_rate(rate: str) -> tuple[int, str]:
     """Split raw string rate into rate and unit.
     Args:
         - rate (str) : raw string rate. e.g. "100mbit"
+
     Returns:
         - rate (int) : rate
         - unit (str) : rate unit

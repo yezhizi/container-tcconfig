@@ -3,6 +3,8 @@ import os
 import struct
 import pickle
 import time
+import fcntl
+import errno
 import asyncio
 from asyncio import Queue
 from typing import Optional
@@ -21,9 +23,10 @@ class NetCtrlCommServer:
 
     def __init__(self, socket_path: str):
         self.socket_path = socket_path
+        self._lock_file = None
+        self._check_path()
         self._server: Optional[asyncio.AbstractServer] = None
         self._stop_event = asyncio.Event()
-        self._check_path()
 
     async def start(self, q: Queue):
         """Start the server. This method will start the server
@@ -32,10 +35,18 @@ class NetCtrlCommServer:
         Args:
             - q (Queue) : asyncio.Queue object to put incoming messages
         """
-        self._server = await asyncio.start_unix_server(
-            lambda reader, writer: self._handle_client(reader, writer, q),
-            path=self.socket_path,
-        )
+        try:
+            self._server = await asyncio.start_unix_server(
+                lambda reader, writer: self._handle_client(reader, writer, q),
+                path=self.socket_path,
+            )
+        except OSError as e:
+            if e.errno in (errno.EADDRINUSE, errno.EACCES):
+                raise OSError(
+                    f"Failed to bind to socket: {self.socket_path}"
+                ) from e
+            else:
+                raise
         try:
             serve_task = asyncio.create_task(self._server.serve_forever())
             await self._stop_event.wait()  # stop event
@@ -62,12 +73,37 @@ class NetCtrlCommServer:
         return data
 
     def _check_path(self):
-        """Check if the socket path exists, and remove it if it does."""
+        """Check if the socket path exists and is in use."""
+        lock_file = self.socket_path + ".lock"
+        self._lock_file = open(lock_file, "w")
+
+        try:
+            fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise OSError(
+                "Another instance is holding the lock. "
+                f"Socket path: {self.socket_path}"
+            )
+
         if os.path.exists(self.socket_path):
             try:
-                os.remove(self.socket_path)
+                # Attempt to connect to the existing socket
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                    s.settimeout(1)  # set timeout to 1 second
+                    s.connect(self.socket_path)
+                # If the connection is successful, the socket is in use
+                raise OSError(
+                    f"Socket is already in use. Socket path: {self.socket_path}"
+                )
             except OSError as e:
-                raise OSError(f"Error removing socket file: {e}")
+                if e.errno == errno.ECONNREFUSED:
+                    # If the connection is refused, the socket is not in use
+                    os.remove(self.socket_path)
+                elif e.errno == errno.ENOENT:
+                    # If the socket does not exist, it is not in use
+                    pass
+                else:
+                    raise
 
     async def _handle_client(self, reader, writer, q: Queue):
         """Handle the client connection."""

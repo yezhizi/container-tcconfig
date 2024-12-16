@@ -205,7 +205,10 @@ class ConNetServer:
         except ContainerNotFoundError:
             logging.error(f"Container {container} not found")
         except Exception as e:
-            logging.error(f"Error initializing htb: {e}")
+            logging.error(
+                "Error initializing htb. Please check if tc is installed "
+                f"or set docker run with --cap-add=NET_ADMIN: {e}"
+            )
 
     def _set_bandwidth_limit(
         self, container1: str, container2: str, bandwidth: Optional[int] = None
