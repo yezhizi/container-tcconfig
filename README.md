@@ -48,6 +48,30 @@ options:
                         Path to the Unix socket
 ```
 
+### 关于带宽单位
+`tc`命令采用的带宽单位与常规的使用不太一致，如`10mbit`表示10m bit/s，实际上习惯表示为10mbps ;`10mbps`表示10m bytes/s， 而习惯上表示为10mBps。 在`contcfg`中，我们与`tc`保持一致。
+  > 以下来自`tc`的使用说明 
+
+  >              bit or a bare number
+  >                     Bits per second
+  >              kbit   Kilobits per second
+  >              mbit   Megabits per second
+  >              gbit   Gigabits per second
+  >              tbit   Terabits per second
+  >              bps    Bytes per second
+  >              kbps   Kilobytes per second
+  >              mbps   Megabytes per second
+  >              gbps   Gigabytes per second
+  >              tbps   Terabytes per second
+  >              To specify in IEC units, replace the SI prefix (k-, m-,
+  >              g-, t-) with IEC prefix (ki-, mi-, gi- and ti-)
+  >              respectively.
+  >
+  >              TC store rates as a 32-bit unsigned integer in bps
+  >              internally, so we can specify a max rate of 4294967295
+  >              bps.
+
+
 ### CLI
 
 ```bash
