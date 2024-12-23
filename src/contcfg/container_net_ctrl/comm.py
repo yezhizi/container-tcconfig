@@ -198,5 +198,5 @@ class NetCtrlCommClient:
         """Check if the socket path exists, and remove it if it does."""
         if not os.path.exists(self.socket_path):
             raise FileNotFoundError(
-                f"Socker file not found: {self.socket_path}"
+                f"Socket file not found: {self.socket_path}"
             )

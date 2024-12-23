@@ -39,6 +39,7 @@ def start_server(args, run_with_sudo):
         args.interval,
         rate_unit=min_unit,
         interval_unit="min",
+        _server_socket_path=args.socket_path,
         _run_with_sudo=run_with_sudo,
     )
     server.start()
