@@ -150,10 +150,10 @@ fi
 # -----------------------------------------------------------------------------
 # Check if running with root privileges
 # -----------------------------------------------------------------------------
-if [[ $EUID -ne 0 ]]; then
-   echo "Error: This script must be run as root."
-   usage
-fi
+# if [[ $EUID -ne 0 ]]; then
+#    echo "Error: This script must be run as root."
+#    usage
+# fi
 
 # -----------------------------------------------------------------------------
 # Check dependencies based on ACTION

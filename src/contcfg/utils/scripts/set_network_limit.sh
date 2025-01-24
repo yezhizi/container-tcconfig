@@ -92,10 +92,10 @@ IP2=$4
 RATE=$(echo "$5" | tr '[:upper:]' '[:lower:]')  # Convert to lowercase
 
 # Check if running with root privileges
-if [[ $EUID -ne 0 ]]; then
-    echo "Error: This script must be run as root."
-    usage
-fi
+# if [[ $EUID -ne 0 ]]; then
+#     echo "Error: This script must be run as root."
+#     usage
+# fi
 
 # -----------------------------------------------------------------------------
 # Check if the containers exist
